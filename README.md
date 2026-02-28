@@ -31,7 +31,7 @@ That's it for today, I'll leave you to the fake CV you might take inspiration fr
 
 # {{FULL_NAME}}
 
-<img src="assets/profile.png" alt="Profile picture" width="200" align="right"/>
+<img src="assets/profile.png" alt="Profile picture" width="200" align="right" style="border-radius: 50%; object-fit: cover;"/>
 
 *Super powerful engineer, based on the moon* 🌝
 
