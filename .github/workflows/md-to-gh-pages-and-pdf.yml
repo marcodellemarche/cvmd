@@ -1,11 +1,10 @@
+# Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy a GitHub Page built with Jekyll and a PDF
 
-# This workflow is triggered on pushes to the repository.
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches:
-      - main
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,19 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
       - name: Setup Pages
-        uses: actions/configure-pages@v3
-
+        uses: actions/configure-pages@v5
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
 
   # Deployment job
   deploy:
@@ -54,9 +50,9 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
-
-  # PDF job
+        uses: actions/deploy-pages@v4
+  
+  # PDF Conversion job
   pdf:
     permissions: write-all
     name: Convert locally to PDF
@@ -65,15 +61,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        
+      - name: Update markdown download link
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.url }}
+        run: |
+          sed -i "s|📎 Download this CV \[as a PDF\]([^)]*)|🌐 Check this CV online at \[GitHub Pages\](${PAGE_URL%/})|" README.md
 
       - name: Convert to PDF
         env:
-          url: ${{ needs.deploy.outputs.url }}
+          PAGE_URL: ${{ needs.deploy.outputs.url }}
         run: |
-          npx md-to-pdf@5.2.4 README.md \
-            --stylesheet "$url/assets/css/style.css" \
+          npx md-to-pdf@5.2.5 README.md \
+            --stylesheet "${PAGE_URL%/}/assets/css/style.css" \
             --css '.page-break { page-break-after: always; }' \
-            --pdf-options '{ "format": "a4", "margin": "15mm 15mm" }'
+            --pdf-options '{ "format": "a4", "margin": "15mm 15mm" }' \
+            --launch-options '{ "args": [ "--no-sandbox" ] }'
           mv README.pdf cv.pdf
 
       - name: Upload PDF into latest release

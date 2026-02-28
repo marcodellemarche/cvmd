@@ -13,9 +13,9 @@ At every commit into the `main` branch, everything will be rebuilt and updated.
 
 Thus, the only thing you need to update is this README. And most importantly, before starting, there are a couple things to do:
 
-- **Update the links in the template below**, especially the link to the PDF. Just change `marcodellemarche/cvmd` with your Github username and repository name.
+- Run `python setup.py` to fill in your personal details (name, email, social handles, etc.).
 - Enable Github Pages for your repo. Go to *Settings*, *Pages*, then under *Build and deployment* set the source to **Github Actions**.
-- You need to re-run once again the failed Action.
+- Commit and push. If the Action fails because Pages wasn't enabled yet, simply re-run it from the Actions tab.
 
 *Pro tip*: if you need to force a page break into the PDF, simply use the following HTML element.
 
@@ -29,15 +29,15 @@ That's it for today, I'll leave you to the fake CV you might take inspiration fr
 
 <div class="page-break"></div>
 
-# Paolo Canestro
+# {{FULL_NAME}}
 
 <img src="assets/profile.png" alt="Profile picture" width="200" align="right"/>
 
 *Super powerful engineer, based on the moon* 🌝
 
-[Email](mailto:paolo@canestro.com) / [LinkedIn](https://www.linkedin.com/in/cvmd) / [GitHub](https://github.com/cvmd) / [Instagram](https://www.instagram.com/cvmd)
+[Email](mailto:{{EMAIL}}) / [LinkedIn](https://www.linkedin.com/in/{{LINKEDIN_USERNAME}}) / [GitHub](https://github.com/{{GITHUB_USERNAME}}) / [Instagram](https://www.instagram.com/{{INSTAGRAM_USERNAME}})
 
-📎 Download this CV [as a PDF](https://github.com/marcodellemarche/cvmd/releases/download/latest/cv.pdf)
+📎 Download this CV [as a PDF](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/releases/download/latest/cv.pdf)
 
 ## 🌙 Moonlight Engineering Experience
 
