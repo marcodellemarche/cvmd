@@ -4,10 +4,12 @@ Setup script for the cvmd template.
 Replaces {{PLACEHOLDER}} tokens in README.md and _config.yml with your personal details.
 
 Usage:
-    python setup.py
-    python3 setup.py
+    python setup.py             # full setup
+    python setup.py --crop      # crop the profile image to a circle (requires Pillow)
+    python setup.py --prompt    # regenerate cv-prompt.txt from the current README.md
 """
 
+import argparse
 import os
 import sys
 
@@ -115,12 +117,10 @@ def replace_in_file(path, replacements):
     print(f"  Updated {path}")
 
 
-def main():
-    # Always run from the directory where this script lives
+def setup():
+    """Run the full interactive setup: replace placeholders, crop image, generate prompt."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
 
-    # Check that the template files exist
     missing = [f for f in FILES_TO_UPDATE if not os.path.isfile(f)]
     if missing:
         print(f"Error: could not find {', '.join(missing)}. Make sure you run this script from the repo root.")
@@ -159,7 +159,7 @@ def main():
         make_circular_profile(PROFILE_IMAGE)
     else:
         print(f"\n  Note: no image found at {PROFILE_IMAGE}.")
-        print(f"  Add your photo there and re-run to get a circular crop.")
+        print(f"  Add your photo there and re-run with --crop to get a circular crop.")
 
     generate_prompt()
 
@@ -170,6 +170,27 @@ def main():
     print(f"  3. Enable GitHub Pages: Settings > Pages > Source: GitHub Actions.")
     print(f"  4. Commit and push — the Action will build the site and generate the PDF.")
     print(f"     If the Action fails because Pages was not yet enabled, re-run it from the Actions tab.")
+
+
+def main():
+    # Always run from the directory where this script lives
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    parser = argparse.ArgumentParser(description="Setup script for the cvmd CV template.")
+    parser.add_argument("--crop", action="store_true", help="Crop the profile image to a circle (requires Pillow).")
+    parser.add_argument("--prompt", action="store_true", help="Regenerate cv-prompt.txt from the current README.md.")
+    args = parser.parse_args()
+
+    if args.crop or args.prompt:
+        if args.crop:
+            if os.path.isfile(PROFILE_IMAGE):
+                make_circular_profile(PROFILE_IMAGE)
+            else:
+                print(f"Error: no image found at {PROFILE_IMAGE}.")
+        if args.prompt:
+            generate_prompt()
+    else:
+        setup()
 
 
 if __name__ == "__main__":

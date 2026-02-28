@@ -24,6 +24,16 @@ At every commit into the `main` branch, everything will be rebuilt and updated.
 <div class="page-break"></div>
 ```
 
-**Circular profile picture** — `setup.py` automatically crops `assets/profile.png` to a circle (requires `pip install Pillow`). Just replace that file with your own photo before running setup.
+**Circular profile picture** — `setup.py` automatically crops `assets/profile.png` to a circle (requires `pip install Pillow`). Just replace that file with your own photo before running setup. If you didn't have Pillow installed at the time, install it and re-run:
+
+```bash
+python setup.py --crop
+```
+
+**Regenerating the LLM prompt** — if you edit `README.md` after the initial setup and want a fresh `cv-prompt.txt` reflecting the current state of your CV:
+
+```bash
+python setup.py --prompt
+```
 
 That's it, see ya! 👋
