@@ -14,6 +14,8 @@ import sys
 
 FILES_TO_UPDATE = ["README.md", "_config.yml"]
 PROFILE_IMAGE = os.path.join("assets", "profile.png")
+PROMPT_OUTPUT = "cv-prompt.txt"
+TEMPLATE_MARKER = "❗ The important stuff ends here ❗"
 
 
 def prompt(label, default=None, required=True):
@@ -57,6 +59,58 @@ def make_circular_profile(image_path):
     result.paste(img, mask=mask)
     result.save(image_path, "PNG")
     print(f"  Cropped {image_path} to a circle with transparent background")
+
+
+def generate_prompt():
+    """Write cv-prompt.txt: a ready-to-use LLM prompt for rewriting the CV content."""
+    with open("README.md", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    marker_pos = content.find(TEMPLATE_MARKER)
+    if marker_pos == -1:
+        print(f"  Could not find the template marker in README.md — skipping prompt generation.")
+        return
+
+    template_section = content[marker_pos + len(TEMPLATE_MARKER):].lstrip("\n")
+
+    prompt_text = f"""\
+You are helping me write my Curriculum Vitae in Markdown, following a specific template.
+
+## Your task
+
+Rewrite the CV content in the template below using MY personal information, which I will
+provide at the end of this prompt.
+
+## Rules
+
+- Output ONLY the CV content (from `<div class="page-break"></div>` to the end of the
+  document) — no explanation, no preamble.
+- In the **first block** (name, profile picture, tagline, contact links, PDF download link),
+  keep the name, picture, contact links, and PDF download link exactly as-is — but
+  **rewrite the tagline** (the italic line below the picture) to reflect my actual profile.
+- Freely rewrite everything after the first block (experience, education, skills, etc.)
+  to reflect my background.
+- Rename, add, or remove sections as needed to best represent my profile.
+- Mirror the Markdown formatting: `##` for sections, `**Role** @ [Company](url) *(dates)*`
+  for entries, bullet points for highlights, `***Technologies used:***` where relevant.
+- Place `<div class="page-break"></div>` at natural page-break points (roughly every
+  1-1.5 pages of content).
+- Do not invent or infer details I have not provided.
+
+## Template
+
+{template_section}
+---
+
+## My information
+
+[Paste your existing CV, describe your experience, education, skills, etc.
+You can also attach a PDF or share a LinkedIn URL if your LLM supports it.]
+"""
+
+    with open(PROMPT_OUTPUT, "w", encoding="utf-8") as f:
+        f.write(prompt_text)
+    print(f"  Generated {PROMPT_OUTPUT}")
 
 
 def replace_in_file(path, replacements):
@@ -115,11 +169,15 @@ def main():
         print(f"\n  Note: no image found at {PROFILE_IMAGE}.")
         print(f"  Add your photo there and re-run to get a circular crop.")
 
+    generate_prompt()
+
     print("\nDone! Next steps:")
-    print("  1. Replace the placeholder CV content in README.md with your own.")
-    print("  2. Enable GitHub Pages: Settings > Pages > Source: GitHub Actions.")
-    print("  3. Commit and push — the Action will build the site and generate the PDF.")
-    print("     If the Action fails because Pages was not yet enabled, re-run it from the Actions tab.")
+    print(f"  1. Open {PROMPT_OUTPUT}, add your details at the bottom, and paste it into")
+    print(f"     your LLM of choice (attach your old CV or LinkedIn URL if it supports it).")
+    print(f"  2. Replace the CV content in README.md with the LLM output.")
+    print(f"  3. Enable GitHub Pages: Settings > Pages > Source: GitHub Actions.")
+    print(f"  4. Commit and push — the Action will build the site and generate the PDF.")
+    print(f"     If the Action fails because Pages was not yet enabled, re-run it from the Actions tab.")
 
 
 if __name__ == "__main__":
