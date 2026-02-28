@@ -1,34 +1,3 @@
-# Curriculum Vitae Markdown
-
-❗ The important stuff starts here ❗
-
-Hi everyone! This repository is a template and it's meant to be used as a starting point for your Curriculum Vitae.
-
-Come on, updating the CV is already boring by itself, imagine having to take care of its formatting as well. So the idea is to update a single Markdown file, like this README, and a Github Action will take care of the rest. It will:
-
-- Put the CV online on **Github Pages**, built with Jekyll. You can even use a custom domain if you'd like. You don't need to worry too much about the formatting. Feel free to move from Jekyll to [one of these](https://github.com/pages-themes).
-- Convert it to a **PDF**, which is uploaded as the `latest` Release. A link to it can be found a few lines above, so it can be easily downloaded by the online version of the CV.
-
-At every commit into the `main` branch, everything will be rebuilt and updated.
-
-Thus, the only thing you need to update is this README. And most importantly, before starting, there are a couple things to do:
-
-- Run `python setup.py` to fill in your personal details (name, email, social handles, etc.).
-- Enable Github Pages for your repo. Go to *Settings*, *Pages*, then under *Build and deployment* set the source to **Github Actions**.
-- Commit and push. If the Action fails because Pages wasn't enabled yet, simply re-run it from the Actions tab.
-
-*Pro tip*: if you need to force a page break into the PDF, simply use the following HTML element.
-
-```html
-<div class="page-break"></div>
-```
-
-That's it for today, I'll leave you to the fake CV you might take inspiration from. See ya! 👋
-
-❗ The important stuff ends here ❗
-
-<div class="page-break"></div>
-
 # {{FULL_NAME}}
 
 <img src="assets/profile.png" alt="Profile picture" width="200" align="right" style="border-radius: 50%; object-fit: cover;"/>

@@ -15,7 +15,6 @@ import sys
 FILES_TO_UPDATE = ["README.md", "_config.yml"]
 PROFILE_IMAGE = os.path.join("assets", "profile.png")
 PROMPT_OUTPUT = "cv-prompt.txt"
-TEMPLATE_MARKER = "❗ The important stuff ends here ❗"
 
 
 def prompt(label, default=None, required=True):
@@ -64,14 +63,7 @@ def make_circular_profile(image_path):
 def generate_prompt():
     """Write cv-prompt.txt: a ready-to-use LLM prompt for rewriting the CV content."""
     with open("README.md", "r", encoding="utf-8") as f:
-        content = f.read()
-
-    marker_pos = content.find(TEMPLATE_MARKER)
-    if marker_pos == -1:
-        print(f"  Could not find the template marker in README.md — skipping prompt generation.")
-        return
-
-    template_section = content[marker_pos + len(TEMPLATE_MARKER):].lstrip("\n")
+        template_section = f.read()
 
     prompt_text = f"""\
 You are helping me write my Curriculum Vitae in Markdown, following a specific template.
