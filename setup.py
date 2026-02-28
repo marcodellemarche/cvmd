@@ -7,6 +7,10 @@ Usage:
     python setup.py             # full setup
     python setup.py --crop      # crop the profile image to a circle (requires Pillow)
     python setup.py --prompt    # regenerate cv-prompt.txt from the current README.md
+
+Profile image:
+    Place your photo as assets/profile.png, .jpg, .jpeg, or .webp before running setup.
+    The image will be cropped to a circle and saved as assets/profile.png.
 """
 
 import argparse
@@ -16,6 +20,7 @@ import sys
 
 FILES_TO_UPDATE = ["README.md", "_config.yml"]
 PROFILE_IMAGE = os.path.join("assets", "profile.png")
+PROFILE_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".webp", ".png")
 PROMPT_OUTPUT = "cv-prompt.txt"
 PLACEHOLDER_IMAGE_HASH = "25623972cfa59e57c7bf87cf57a4109a20e5fd51da9f572a31d474e6e3f92327"
 MAX_PROFILE_SIZE = 300
@@ -35,6 +40,15 @@ def prompt(label, default=None, required=True):
         return value
 
 
+def find_profile_image():
+    """Return the path of the first profile image found in assets/, or None."""
+    for ext in PROFILE_IMAGE_EXTENSIONS:
+        path = os.path.join("assets", f"profile{ext}")
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def image_sha256(path):
     import hashlib
     h = hashlib.sha256()
@@ -45,8 +59,12 @@ def image_sha256(path):
 
 
 def make_circular_profile(image_path):
-    """Center-crop a profile image to a circle with a transparent background."""
-    if image_sha256(image_path) == PLACEHOLDER_IMAGE_HASH:
+    """Center-crop a profile image to a circle with a transparent background.
+
+    Always outputs to PROFILE_IMAGE (assets/profile.png). If the source image
+    is a different format/name it is removed after conversion.
+    """
+    if image_path == PROFILE_IMAGE and image_sha256(image_path) == PLACEHOLDER_IMAGE_HASH:
         print(f"\n  Skipping image crop — {image_path} is still the placeholder.")
         print(f"  Replace it with your own photo, then re-run with --crop.")
         return
@@ -79,8 +97,13 @@ def make_circular_profile(image_path):
     if size > MAX_PROFILE_SIZE:
         result = result.resize((MAX_PROFILE_SIZE, MAX_PROFILE_SIZE), Image.LANCZOS)
 
-    result.save(image_path, "PNG")
-    print(f"  Cropped {image_path} to a {min(size, MAX_PROFILE_SIZE)}x{min(size, MAX_PROFILE_SIZE)} circle with transparent background")
+    result.save(PROFILE_IMAGE, "PNG")
+
+    # Remove the source file if it was not already profile.png
+    if image_path != PROFILE_IMAGE:
+        os.remove(image_path)
+
+    print(f"  Cropped {image_path} → {PROFILE_IMAGE} ({min(size, MAX_PROFILE_SIZE)}x{min(size, MAX_PROFILE_SIZE)}, transparent circle)")
 
 
 def generate_prompt():
@@ -176,11 +199,12 @@ def setup():
     for filepath in FILES_TO_UPDATE:
         replace_in_file(filepath, replacements)
 
-    if os.path.isfile(PROFILE_IMAGE):
-        make_circular_profile(PROFILE_IMAGE)
+    found = find_profile_image()
+    if found:
+        make_circular_profile(found)
     else:
-        print(f"\n  Note: no image found at {PROFILE_IMAGE}.")
-        print(f"  Add your photo there and re-run with --crop to get a circular crop.")
+        print(f"\n  Note: no profile image found in assets/.")
+        print(f"  Add your photo as assets/profile.png (or .jpg/.jpeg/.webp) and re-run with --crop.")
 
     generate_prompt()
 
@@ -204,10 +228,11 @@ def main():
 
     if args.crop or args.prompt:
         if args.crop:
-            if os.path.isfile(PROFILE_IMAGE):
-                make_circular_profile(PROFILE_IMAGE)
+            found = find_profile_image()
+            if found:
+                make_circular_profile(found)
             else:
-                print(f"Error: no image found at {PROFILE_IMAGE}.")
+                print(f"Error: no profile image found in assets/. Add your photo as assets/profile.png (or .jpg/.jpeg/.webp).")
         if args.prompt:
             generate_prompt()
     else:

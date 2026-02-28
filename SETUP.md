@@ -25,7 +25,7 @@ At every commit into the `main` branch, everything will be rebuilt and updated.
 <div class="page-break"></div>
 ```
 
-**Circular profile picture** — `setup.py` automatically crops `assets/profile.png` to a circle (requires `pip install Pillow`). Just replace that file with your own photo before running setup. If you didn't have Pillow installed at the time, install it and re-run:
+**Circular profile picture** — `setup.py` automatically crops your photo to a circle and saves it as `assets/profile.png` (requires `pip install Pillow`). Place your photo in `assets/` before running setup — any of these formats is accepted: `.png`, `.jpg`, `.jpeg`, `.webp`. If you didn't have Pillow installed at the time, install it and re-run:
 
 ```bash
 python setup.py --crop

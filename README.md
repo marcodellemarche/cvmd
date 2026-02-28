@@ -40,8 +40,6 @@ Dissertation: *Fault-tolerant software architectures for deep-space communicatio
 
 Final grade: 110/110 cum laude. Thesis on real-time scheduling algorithms for embedded space systems.
 
-<div class="page-break"></div>
-
 ## 🌌 Extracurriculars
 
 **Technical Lead Volunteer** @ [Cosmic Communicators](http://cosmiccommunicators.club) *(Oct 2023 - Present)*
