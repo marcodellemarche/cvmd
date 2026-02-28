@@ -11,10 +11,11 @@ At every commit into the `main` branch, everything will be rebuilt and updated.
 
 ## Getting started
 
-1. Run `python setup.py` to fill in your personal details (name, email, social handles, etc.) and generate a `cv-prompt.txt` you can feed to any LLM to draft your CV content.
-2. Replace the placeholder content in `README.md` with your own (manually or using the LLM output).
-3. Enable Github Pages for your repo. Go to *Settings*, *Pages*, then under *Build and deployment* set the source to **Github Actions**.
-4. Commit and push. If the Action fails because Pages wasn't enabled yet, simply re-run it from the Actions tab.
+1. Replace `assets/profile.png` with your own photo.
+2. Run `python setup.py` to fill in your personal details (name, email, social handles, etc.) and generate a `cv-prompt.txt` you can feed to any LLM to draft your CV content.
+3. Replace the placeholder content in `README.md` with your own (manually or using the LLM output).
+4. Enable Github Pages for your repo. Go to *Settings*, *Pages*, then under *Build and deployment* set the source to **Github Actions**.
+5. Commit and push. If the Action fails because Pages wasn't enabled yet, simply re-run it from the Actions tab.
 
 ## Tips
 

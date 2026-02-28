@@ -17,6 +17,8 @@ import sys
 FILES_TO_UPDATE = ["README.md", "_config.yml"]
 PROFILE_IMAGE = os.path.join("assets", "profile.png")
 PROMPT_OUTPUT = "cv-prompt.txt"
+PLACEHOLDER_IMAGE_HASH = "25623972cfa59e57c7bf87cf57a4109a20e5fd51da9f572a31d474e6e3f92327"
+MAX_PROFILE_SIZE = 300
 
 
 def prompt(label, default=None, required=True):
@@ -33,8 +35,22 @@ def prompt(label, default=None, required=True):
         return value
 
 
+def image_sha256(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def make_circular_profile(image_path):
     """Center-crop a profile image to a circle with a transparent background."""
+    if image_sha256(image_path) == PLACEHOLDER_IMAGE_HASH:
+        print(f"\n  Skipping image crop — {image_path} is still the placeholder.")
+        print(f"  Replace it with your own photo, then re-run with --crop.")
+        return
+
     try:
         from PIL import Image, ImageDraw
     except ImportError:
@@ -58,8 +74,13 @@ def make_circular_profile(image_path):
     # Paste onto a transparent canvas and apply the mask
     result = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     result.paste(img, mask=mask)
+
+    # Cap to MAX_PROFILE_SIZE
+    if size > MAX_PROFILE_SIZE:
+        result = result.resize((MAX_PROFILE_SIZE, MAX_PROFILE_SIZE), Image.LANCZOS)
+
     result.save(image_path, "PNG")
-    print(f"  Cropped {image_path} to a circle with transparent background")
+    print(f"  Cropped {image_path} to a {min(size, MAX_PROFILE_SIZE)}x{min(size, MAX_PROFILE_SIZE)} circle with transparent background")
 
 
 def generate_prompt():
