@@ -18,6 +18,14 @@ import os
 import sys
 
 
+def _w(text, bold=False):
+    """Wrap text in yellow (+ optional bold) ANSI codes if stdout is a TTY."""
+    if not sys.stdout.isatty():
+        return text
+    codes = "\033[33m" + ("\033[1m" if bold else "")
+    return f"{codes}{text}\033[0m"
+
+
 FILES_TO_UPDATE = ["README.md", "_config.yml"]
 PROFILE_IMAGE = os.path.join("assets", "profile.png")
 PROFILE_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".webp", ".png")
@@ -65,8 +73,12 @@ def make_circular_profile(image_path):
     is a different format/name it is removed after conversion.
     """
     if image_path == PROFILE_IMAGE and image_sha256(image_path) == PLACEHOLDER_IMAGE_HASH:
-        print(f"\n  Skipping image crop — {image_path} is still the placeholder.")
-        print(f"  Replace it with your own photo, then re-run with --crop.")
+        print(f"\n  {_w('─' * 54)}")
+        print(f"  {_w('⚠  Profile photo: still using placeholder!', bold=True)}")
+        print(f"  {_w('─' * 54)}")
+        print(f"  {_w('Place your photo in assets/ (profile.png/jpg/jpeg/webp),')}")
+        print(f"  {_w('then run:  python setup.py --crop')}")
+        print(f"  {_w('─' * 54)}")
         return
 
     try:
@@ -200,15 +212,25 @@ def setup():
         replace_in_file(filepath, replacements)
 
     found = find_profile_image()
+    photo_missing = False
     if found:
         make_circular_profile(found)
+        # make_circular_profile prints its own warning if it's still the placeholder
+        photo_missing = found == PROFILE_IMAGE and image_sha256(found) == PLACEHOLDER_IMAGE_HASH
     else:
-        print(f"\n  Note: no profile image found in assets/.")
-        print(f"  Add your photo as assets/profile.png (or .jpg/.jpeg/.webp) and re-run with --crop.")
+        photo_missing = True
+        print(f"\n  {_w('─' * 54)}")
+        print(f"  {_w('⚠  Profile photo: no image found in assets/!', bold=True)}")
+        print(f"  {_w('─' * 54)}")
+        print(f"  {_w('Place your photo in assets/ (profile.png/jpg/jpeg/webp),')}")
+        print(f"  {_w('then run:  python setup.py --crop')}")
+        print(f"  {_w('─' * 54)}")
 
     generate_prompt()
 
     print("\nDone! Next steps:")
+    if photo_missing:
+        print(f"  {_w('0. *** Add your profile photo and run: python setup.py --crop ***', bold=True)}")
     print(f"  1. Open {PROMPT_OUTPUT}, add your details at the bottom, and paste it into")
     print(f"     your LLM of choice (attach your old CV or LinkedIn URL if it supports it).")
     print(f"  2. Replace the CV content in README.md with the LLM output.")
@@ -218,6 +240,10 @@ def setup():
 
 
 def main():
+    # Enable ANSI escape codes on Windows (no-op on other platforms)
+    if os.name == "nt":
+        os.system("")
+
     # Always run from the directory where this script lives
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
