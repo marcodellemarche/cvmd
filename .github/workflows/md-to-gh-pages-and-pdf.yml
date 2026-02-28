@@ -85,6 +85,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: false
-          title: "CV's PDF"
+          title: "Latest PDF"
           files: |
             cv.pdf

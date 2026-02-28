@@ -1,6 +1,10 @@
 theme: jekyll-theme-cayman
 title: CV 🚀
 description: "{{FULL_NAME}}'s CV"
+url: "{{URL}}"
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
 exclude:
   - SETUP.md
   - setup.py

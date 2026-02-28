@@ -192,6 +192,8 @@ def setup():
     repo_name = prompt("Repository name", default=os.path.basename(script_dir))
     linkedin_username = prompt("LinkedIn username (the part after linkedin.com/in/)")
     instagram_username = prompt("Instagram username", required=False)
+    default_url = f"https://{github_username}.github.io/{repo_name}"
+    site_url = prompt("Site URL (leave blank to use GitHub Pages default)", default=default_url, required=False)
 
     replacements = {
         "{{FULL_NAME}}": full_name,
@@ -199,6 +201,7 @@ def setup():
         "{{GITHUB_USERNAME}}": github_username,
         "{{REPO_NAME}}": repo_name,
         "{{LINKEDIN_USERNAME}}": linkedin_username,
+        "{{URL}}": site_url,
     }
 
     if instagram_username:
