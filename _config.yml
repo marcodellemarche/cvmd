@@ -1,10 +1,21 @@
 theme: jekyll-theme-cayman
-title: CV 🚀
-description: "{{FULL_NAME}}'s CV"
+title: "{{FULL_NAME}}"
+description: "{{DESCRIPTION}}"
 url: "{{URL}}"
+author: "{{FULL_NAME}}"
 plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
+defaults:
+  - scope:
+      path: ""
+    values:
+      description: "{{OG_DESCRIPTION}}"
+      image:
+        path: /assets/og-image.png
+        width: 1200
+        height: 630
+        alt: "{{FULL_NAME}}"
 exclude:
   - SETUP.md
   - setup.py

@@ -54,13 +54,14 @@ jobs:
   
   # PDF Conversion job
   pdf:
-    permissions: write-all
+    permissions:
+      contents: write
     name: Convert locally to PDF
     runs-on: ubuntu-latest
     needs: deploy
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Update markdown download link
         env:
@@ -80,11 +81,8 @@ jobs:
           mv README.pdf cv.pdf
 
       - name: Upload PDF into latest release
-        uses: marvinpinto/action-automatic-releases@v1.2.1
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: false
-          title: "Latest PDF"
-          files: |
-            cv.pdf
+          tag_name: latest
+          name: Latest CV
+          files: cv.pdf

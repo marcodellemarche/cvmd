@@ -32,9 +32,14 @@ PROFILE_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".webp", ".png")
 PROMPT_OUTPUT = "cv-prompt.txt"
 PLACEHOLDER_IMAGE_HASH = "25623972cfa59e57c7bf87cf57a4109a20e5fd51da9f572a31d474e6e3f92327"
 MAX_PROFILE_SIZE = 300
+OG_IMAGE = os.path.join("assets", "og-image.png")
+OG_WIDTH, OG_HEIGHT = 1200, 630
+# Cayman theme gradient endpoints: #155799 → #159957
+OG_COLOR_LEFT  = (21,  87,  153)
+OG_COLOR_RIGHT = (21, 153,  87)
 
 
-def prompt(label, default=None, required=True):
+def prompt(label, default=None, required=True, validate=None, validate_msg="Invalid value, please try again."):
     hint = f" [{default}]" if default else (" (optional, press Enter to skip)" if not required else "")
     while True:
         value = input(f"  {label}{hint}: ").strip()
@@ -44,6 +49,9 @@ def prompt(label, default=None, required=True):
             return ""
         if not value:
             print("  This field is required.")
+            continue
+        if validate and not validate(value):
+            print(f"  {validate_msg}")
             continue
         return value
 
@@ -118,6 +126,47 @@ def make_circular_profile(image_path):
     print(f"  Cropped {image_path} → {PROFILE_IMAGE} ({min(size, MAX_PROFILE_SIZE)}x{min(size, MAX_PROFILE_SIZE)}, transparent circle)")
 
 
+def generate_og_image():
+    """Generate a 1200x630 og:image from the circular profile on a Cayman-gradient background.
+
+    Skipped if og-image.png already exists (user-provided image takes priority).
+    Delete og-image.png and re-run with --crop to regenerate.
+    """
+    if not os.path.isfile(PROFILE_IMAGE):
+        print(f"  Skipping og-image — {PROFILE_IMAGE} not found.")
+        return
+
+    if image_sha256(PROFILE_IMAGE) == PLACEHOLDER_IMAGE_HASH:
+        print(f"  Skipping og-image — profile is still the placeholder.")
+        return
+
+    if os.path.isfile(OG_IMAGE):
+        print(f"  Skipping og-image — {OG_IMAGE} already exists (delete it to regenerate).")
+        return
+
+    try:
+        from PIL import Image
+    except ImportError:
+        print(f"  Skipping og-image — Pillow is not installed.")
+        return
+
+    # Build a left-to-right gradient background
+    strip = Image.new("RGB", (OG_WIDTH, 1))
+    px = strip.load()
+    for x in range(OG_WIDTH):
+        t = x / (OG_WIDTH - 1)
+        px[x, 0] = tuple(int(OG_COLOR_LEFT[i] + (OG_COLOR_RIGHT[i] - OG_COLOR_LEFT[i]) * t) for i in range(3))
+    bg = strip.resize((OG_WIDTH, OG_HEIGHT), Image.NEAREST).convert("RGBA")
+
+    # Centre the circular profile on the canvas
+    profile = Image.open(PROFILE_IMAGE).convert("RGBA")
+    pos = ((OG_WIDTH - profile.width) // 2, (OG_HEIGHT - profile.height) // 2)
+    bg.paste(profile, pos, mask=profile)
+
+    bg.convert("RGB").save(OG_IMAGE, "PNG")
+    print(f"  Generated {OG_IMAGE} ({OG_WIDTH}×{OG_HEIGHT}, Cayman gradient)")
+
+
 def generate_prompt():
     """Write cv-prompt.txt: a ready-to-use LLM prompt for rewriting the CV content."""
     with open("README.md", "r", encoding="utf-8") as f:
@@ -173,6 +222,18 @@ def replace_in_file(path, replacements):
     print(f"  Updated {path}")
 
 
+def generate_cname(site_url, default_url):
+    """Write a CNAME file if the user provided a custom domain."""
+    if site_url == default_url:
+        return
+    from urllib.parse import urlparse
+    hostname = urlparse(site_url).netloc
+    if hostname:
+        with open("CNAME", "w", encoding="utf-8") as f:
+            f.write(hostname + "\n")
+        print(f"  Generated CNAME → {hostname}")
+
+
 def setup():
     """Run the full interactive setup: replace placeholders, crop image, generate prompt."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -187,13 +248,25 @@ def setup():
     print("You can always edit README.md manually afterwards.\n")
 
     full_name = prompt("Full name (e.g. Jane Doe)")
-    email = prompt("Email address")
+    email = prompt(
+        "Email address",
+        validate=lambda v: "@" in v and "." in v.split("@")[-1],
+        validate_msg="Please enter a valid email address.",
+    )
     github_username = prompt("GitHub username")
     repo_name = prompt("Repository name", default=os.path.basename(script_dir))
     linkedin_username = prompt("LinkedIn username (the part after linkedin.com/in/)")
     instagram_username = prompt("Instagram username", required=False)
     default_url = f"https://{github_username}.github.io/{repo_name}"
-    site_url = prompt("Site URL (leave blank to use GitHub Pages default)", default=default_url, required=False)
+    site_url = prompt(
+        "Site URL (leave blank to use GitHub Pages default)",
+        default=default_url,
+        required=False,
+        validate=lambda v: v.startswith("http://") or v.startswith("https://"),
+        validate_msg="URL must start with http:// or https://",
+    )
+    description = prompt("Short description (used in browser tab as 'Name | description')", default=f"{full_name}'s CV", required=False)
+    og_description = prompt("Social preview description (richer, shown in search results and link previews)", default=description, required=False)
 
     replacements = {
         "{{FULL_NAME}}": full_name,
@@ -202,6 +275,8 @@ def setup():
         "{{REPO_NAME}}": repo_name,
         "{{LINKEDIN_USERNAME}}": linkedin_username,
         "{{URL}}": site_url,
+        "{{DESCRIPTION}}": description,
+        "{{OG_DESCRIPTION}}": og_description,
     }
 
     if instagram_username:
@@ -213,6 +288,7 @@ def setup():
     print("\nApplying changes...")
     for filepath in FILES_TO_UPDATE:
         replace_in_file(filepath, replacements)
+    generate_cname(site_url, default_url)
 
     found = find_profile_image()
     photo_missing = False
@@ -220,6 +296,7 @@ def setup():
         make_circular_profile(found)
         # make_circular_profile prints its own warning if it's still the placeholder
         photo_missing = found == PROFILE_IMAGE and image_sha256(found) == PLACEHOLDER_IMAGE_HASH
+        generate_og_image()
     else:
         photo_missing = True
         print(f"\n  {_w('─' * 54)}")
@@ -260,6 +337,7 @@ def main():
             found = find_profile_image()
             if found:
                 make_circular_profile(found)
+                generate_og_image()
             else:
                 print(f"Error: no profile image found in assets/. Add your photo as assets/profile.png (or .jpg/.jpeg/.webp).")
         if args.prompt:
