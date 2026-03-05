@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cvmd editor</title>
+  <link rel="icon" href="../favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0e0e10;
+      --bg-surface: #18181b;
+      --bg-elevated: #1e1e22;
+      --border: #2a2a2e;
+      --border-focus: #5b8def;
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --text-dim: #52525b;
+      --accent: #5b8def;
+      --accent-hover: #7ba4f7;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-serif: 'Source Serif 4', Georgia, serif;
+      --radius: 6px;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── AUTH SCREEN ── */
+    .auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 2rem;
+    }
+
+    .auth-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      animation: fadeUp 0.4s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-card h1 {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-card p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 1.8rem;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.8rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .field input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .field small {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-surface);
+      border-color: var(--text-muted);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      margin-top: 0.6rem;
+      padding: 0.65rem;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── EDITOR LAYOUT ── */
+    .editor-app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .toolbar-title {
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-right: auto;
+      letter-spacing: -0.01em;
+    }
+
+    .toolbar-title span {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-right: 0.5rem;
+      transition: color 0.3s;
+    }
+
+    .status.saving {
+      color: var(--accent);
+    }
+
+    .status.saved {
+      color: var(--success);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .main-area {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.8rem;
+    }
+
+    .photo-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border);
+      display: block;
+      margin: 0 auto 0.8rem;
+      background: var(--bg);
+    }
+
+    .photo-upload-label {
+      display: block;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--accent);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .photo-upload-label:hover {
+      color: var(--accent-hover);
+    }
+
+    #photoInput {
+      display: none;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-logout {
+      width: 100%;
+      justify-content: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .btn-logout:hover {
+      color: var(--danger);
+      background: transparent;
+    }
+
+    /* ── EDITOR + PREVIEW PANES ── */
+    .panes {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .pane-header {
+      padding: 0.5rem 1rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .divider {
+      width: 1px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    #markdownEditor {
+      flex: 1;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      padding: 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+
+    #markdownEditor::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* ── PREVIEW STYLES ── */
+    .preview-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      background: #fff;
+    }
+
+    .preview-scroll .preview-content {
+      max-width: 700px;
+      margin: 0 auto;
+      font-family: var(--font-serif);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #1a1a1a;
+    }
+
+    .preview-content h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: #111;
+      letter-spacing: -0.03em;
+    }
+
+    .preview-content h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 2rem 0 0.8rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid #e5e5e5;
+      color: #222;
+    }
+
+    .preview-content h3 {
+      font-size: 1.1rem;
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    .preview-content p {
+      margin-bottom: 0.8rem;
+    }
+
+    .preview-content a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .preview-content a:hover {
+      text-decoration: underline;
+    }
+
+    .preview-content ul,
+    .preview-content ol {
+      margin: 0.5rem 0 1rem 1.5rem;
+    }
+
+    .preview-content li {
+      margin-bottom: 0.3rem;
+    }
+
+    .preview-content img {
+      max-width: 150px;
+      border-radius: 50%;
+      display: block;
+      margin: 0 auto 1rem;
+    }
+
+    .preview-content strong {
+      font-weight: 700;
+    }
+
+    .preview-content em {
+      font-style: italic;
+    }
+
+    .preview-content code {
+      background: #f3f3f3;
+      padding: 0.15rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+    }
+
+    .preview-content blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      color: #555;
+      margin: 1rem 0;
+    }
+
+    .preview-content hr {
+      border: none;
+      border-top: 1px solid #e5e5e5;
+      margin: 1.5rem 0;
+    }
+
+    /* ── TOAST NOTIFICATIONS ── */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text);
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+      max-width: 340px;
+    }
+
+    .toast.toast-error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .toast.toast-success {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .panes {
+        flex-direction: column;
+      }
+
+      .divider {
+        width: auto;
+        height: 1px;
+      }
+    }
+
+    /* ── MODAL (photo crop) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 460px;
+      width: 90%;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .modal h2 {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .crop-area {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 1rem;
+      overflow: hidden;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg);
+    }
+
+    .crop-area img {
+      position: absolute;
+      cursor: grab;
+    }
+
+    .crop-area img:active {
+      cursor: grabbing;
+    }
+
+    .crop-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      justify-content: center;
+    }
+
+    .crop-controls label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .crop-controls input[type="range"] {
+      width: 160px;
+      accent-color: var(--accent);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ════════ AUTH SCREEN ════════ -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <h1>cvmd editor</h1>
+      <p>Inserisci il tuo GitHub Personal Access Token per modificare il CV. Il token viene salvato solo nel tuo
+        browser.</p>
+
+      <div class="field">
+        <label for="repoOwner">Repository owner</label>
+        <input type="text" id="repoOwner" placeholder="marcodellemarche">
+      </div>
+
+      <div class="field">
+        <label for="repoName">Repository name</label>
+        <input type="text" id="repoName" placeholder="cvmd">
+      </div>
+
+      <div class="field">
+        <label for="tokenInput">GitHub Token (PAT)</label>
+        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+        <small>Crea un <a href="https://github.com/settings/tokens?type=beta" target="_blank"
+            style="color:var(--accent)">fine-grained token</a> con permessi "Contents" (read &amp; write) sulla tua repo
+          cvmd.</small>
+      </div>
+
+      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Accedi all'editor</button>
+    </div>
+  </div>
+
+  <!-- ════════ EDITOR APP ════════ -->
+  <div class="editor-app" id="editorApp">
+    <div class="toolbar">
+      <div class="toolbar-title">cvmd <span>editor</span></div>
+      <span class="status" id="statusText"></span>
+      <button class="btn" id="saveBtn" onclick="saveFile()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+        Salva
+      </button>
+    </div>
+
+    <div class="main-area">
+      <div class="sidebar">
+        <div class="sidebar-section">
+          <h3>Foto profilo</h3>
+          <img class="photo-preview" id="photoPreview" src="" alt="Foto profilo">
+          <label class="photo-upload-label" for="photoInput">Cambia foto</label>
+          <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoSelect(event)">
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Shortcut</h3>
+          <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.8">
+            <kbd
+              style="background:var(--bg);padding:0.1rem 0.35rem;border-radius:3px;border:1px solid var(--border);font-size:0.65rem">Ctrl+S</kbd>
+            Salva<br>
+            <kbd
+              style="background:var(--bg);padding:0.1rem 0.35rem;border-radius:3px;border:1px solid var(--border);font-size:0.65rem">Tab</kbd>
+            Indenta
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="btn btn-logout" onclick="doLogout()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2 2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Esci
+          </button>
+        </div>
+      </div>
+
+      <div class="panes">
+        <div class="pane">
+          <div class="pane-header">Markdown</div>
+          <textarea id="markdownEditor" placeholder="Caricamento..." spellcheck="false"></textarea>
+        </div>
+        <div class="divider"></div>
+        <div class="pane">
+          <div class="pane-header">Anteprima</div>
+          <div class="preview-scroll">
+            <div class="preview-content" id="previewContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PHOTO CROP MODAL ════════ -->
+  <div class="modal-overlay" id="cropModal">
+    <div class="modal">
+      <h2>Ritaglia foto profilo</h2>
+      <div class="crop-area" id="cropArea">
+        <img id="cropImg" src="" alt="Crop">
+      </div>
+      <div class="crop-controls">
+        <label>Zoom</label>
+        <input type="range" id="cropZoom" min="100" max="400" value="100">
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeCropModal()">Annulla</button>
+        <button class="btn btn-primary" style="width:auto" onclick="applyCrop()">Applica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ TOAST CONTAINER ════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // ── STATE ──
+    let config = { owner: '', repo: '', token: '', branch: 'main' };
+    let fileSha = '';
+    let photoSha = '';
+    let dirty = false;
+
+    const API = 'https://api.github.com';
+
+    // ── HELPERS ──
+    function gh(path, opts = {}) {
+      return fetch(`${API}/repos/${config.owner}/${config.repo}${path}`, {
+        ...opts,
+        headers: {
+          'Authorization': `Bearer ${config.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          ...(opts.headers || {})
+        }
+      });
+    }
+
+    function b64decode(str) {
+      return decodeURIComponent(escape(atob(str.replace(/\n/g, ''))));
+    }
+
+    function b64encode(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function toast(msg, type = '') {
+      const el = document.createElement('div');
+      el.className = `toast ${type ? 'toast-' + type : ''}`;
+      el.textContent = msg;
+      document.getElementById('toastContainer').appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function setStatus(text, cls = '') {
+      const el = document.getElementById('statusText');
+      el.textContent = text;
+      el.className = `status ${cls}`;
+    }
+
+    // ── AUTH ──
+    function loadConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('cvmd_config'));
+        if (saved && saved.token) return saved;
+      } catch { }
+      return null;
+    }
+
+    function saveConfig() {
+      localStorage.setItem('cvmd_config', JSON.stringify(config));
+    }
+
+    async function doLogin() {
+      const owner = document.getElementById('repoOwner').value.trim();
+      const repo = document.getElementById('repoName').value.trim();
+      const token = document.getElementById('tokenInput').value.trim();
+
+      if (!owner || !repo || !token) {
+        toast('Compila tutti i campi', 'error');
+        return;
+      }
+
+      config = { owner, repo, token, branch: 'main' };
+
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Verifica...';
+
+      try {
+        const res = await gh('/contents/README.md?ref=main');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        saveConfig();
+        await initEditor();
+      } catch (e) {
+        toast('Token non valido o repo non trovata', 'error');
+        btn.disabled = false;
+        btn.textContent = "Accedi all'editor";
+      }
+    }
+
+    function doLogout() {
+      localStorage.removeItem('cvmd_config');
+      location.reload();
+    }
+
+    // ── EDITOR INIT ──
+    async function initEditor() {
+      document.getElementById('authScreen').style.display = 'none';
+      const app = document.getElementById('editorApp');
+      app.style.display = 'flex';
+
+      setStatus('Caricamento...', 'saving');
+
+      try {
+        // Load README.md
+        const res = await gh('/contents/README.md?ref=main');
+        const data = await res.json();
+        fileSha = data.sha;
+        const content = b64decode(data.content);
+
+        const editor = document.getElementById('markdownEditor');
+        editor.value = content;
+        editor.placeholder = '';
+        updatePreview();
+
+        // Load profile photo
+        try {
+          const photoRes = await gh('/contents/assets/profile.png?ref=main');
+          const photoData = await photoRes.json();
+          photoSha = photoData.sha;
+          document.getElementById('photoPreview').src =
+            `data:image/png;base64,${photoData.content.replace(/\n/g, '')}`;
+        } catch {
+          document.getElementById('photoPreview').src = '';
+        }
+
+        setStatus('Pronto', 'saved');
+        setTimeout(() => setStatus(''), 2000);
+      } catch (e) {
+        setStatus('Errore caricamento', 'error');
+        toast(`Errore: ${e.message}`, 'error');
+      }
+    }
+
+    // ── PREVIEW ──
+    function updatePreview() {
+      const md = document.getElementById('markdownEditor').value;
+      const html = marked.parse(md);
+
+      // Replace relative image paths with GitHub raw URLs
+      const baseUrl = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/`;
+      const fixedHtml = html.replace(
+        /src="(?!https?:\/\/|data:)([^"]+)"/g,
+        (_, p) => `src="${baseUrl}${p}"`
+      );
+
+      document.getElementById('previewContent').innerHTML = fixedHtml;
+    }
+
+    // ── SAVE ──
+    async function saveFile() {
+      const content = document.getElementById('markdownEditor').value;
+      const btn = document.getElementById('saveBtn');
+
+      btn.disabled = true;
+      setStatus('Salvataggio...', 'saving');
+
+      try {
+        const res = await gh('/contents/README.md', {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: 'Aggiorna CV da editor',
+            content: b64encode(content),
+            sha: fileSha,
+            branch: config.branch
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        fileSha = data.content.sha;
+        dirty = false;
+
+        setStatus('Salvato ✓', 'saved');
+        toast('CV salvato e commit eseguito', 'success');
+        setTimeout(() => setStatus(''), 3000);
+      } catch (e) {
+        setStatus('Errore', 'error');
+        toast(`Errore salvataggio: ${e.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ── PHOTO HANDLING ──
+    let cropState = { file: null, offsetX: 0, offsetY: 0, zoom: 100, dragging: false, startX: 0, startY: 0 };
+
+    function handlePhotoSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      cropState.file = file;
+      cropState.offsetX = 0;
+      cropState.offsetY = 0;
+      cropState.zoom = 100;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = document.getElementById('cropImg');
+        img.src = ev.target.result;
+        img.onload = () => {
+          resetCropPosition();
+          document.getElementById('cropModal').classList.add('active');
+        };
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    function resetCropPosition() {
+      const img = document.getElementById('cropImg');
+      const area = document.getElementById('cropArea');
+      const zoom = cropState.zoom / 100;
+      const areaSize = area.offsetWidth;
+
+      const imgW = img.naturalWidth * zoom;
+      const imgH = img.naturalHeight * zoom;
+      const scale = Math.max(areaSize / img.naturalWidth, areaSize / img.naturalHeight) * zoom;
+
+      img.style.width = (img.naturalWidth * scale) + 'px';
+      img.style.height = (img.naturalHeight * scale) + 'px';
+
+      cropState.offsetX = -(img.naturalWidth * scale - areaSize) / 2;
+      cropState.offsetY = -(img.naturalHeight * scale - areaSize) / 2;
+      applyCropTransform();
+    }
+
+    function applyCropTransform() {
+      const img = document.getElementById('cropImg');
+      img.style.left = cropState.offsetX + 'px';
+      img.style.top = cropState.offsetY + 'px';
+    }
+
+    // Zoom
+    document.getElementById('cropZoom').addEventListener('input', (e) => {
+      cropState.zoom = parseInt(e.target.value);
+      resetCropPosition();
+    });
+
+    // Drag
+    const cropArea = document.getElementById('cropArea');
+    cropArea.addEventListener('mousedown', (e) => {
+      cropState.dragging = true;
+      cropState.startX = e.clientX - cropState.offsetX;
+      cropState.startY = e.clientY - cropState.offsetY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!cropState.dragging) return;
+      cropState.offsetX = e.clientX - cropState.startX;
+      cropState.offsetY = e.clientY - cropState.startY;
+      applyCropTransform();
+    });
+
+    window.addEventListener('mouseup', () => { cropState.dragging = false; });
+
+    // Touch support
+    cropArea.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      cropState.dragging = true;
+      cropState.startX = t.clientX - cropState.offsetX;
+      cropState.startY = t.clientY - cropState.offsetY;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!cropState.dragging) return;
+      const t = e.touches[0];
+      cropState.offsetX = t.clientX - cropState.startX;
+      cropState.offsetY = t.clientY - cropState.startY;
+      applyCropTransform();
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => { cropState.dragging = false; });
+
+    function closeCropModal() {
+      document.getElementById('cropModal').classList.remove('active');
+    }
+
+    async function applyCrop() {
+      const img = document.getElementById('cropImg');
+      const area = document.getElementById('cropArea');
+      const areaSize = area.offsetWidth;
+
+      // Draw cropped circular image to canvas
+      const canvas = document.createElement('canvas');
+      const size = 500; // output size
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Calculate source coordinates
+      const displayW = parseFloat(img.style.width);
+      const displayH = parseFloat(img.style.height);
+      const scaleX = img.naturalWidth / displayW;
+      const scaleY = img.naturalHeight / displayH;
+
+      const sx = -cropState.offsetX * scaleX;
+      const sy = -cropState.offsetY * scaleY;
+      const sw = areaSize * scaleX;
+      const sh = areaSize * scaleY;
+
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+
+      // Convert to base64 PNG (without data URL prefix)
+      const dataUrl = canvas.toDataURL('image/png');
+      const base64 = dataUrl.split(',')[1];
+
+      closeCropModal();
+      setStatus('Upload foto...', 'saving');
+
+      try {
+        const res = await gh('/contents/assets/profile.png', {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: 'Aggiorna foto profilo da editor',
+            content: base64,
+            sha: photoSha,
+            branch: config.branch
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        photoSha = data.content.sha;
+
+        document.getElementById('photoPreview').src = dataUrl;
+        setStatus('Foto aggiornata ✓', 'saved');
+        toast('Foto profilo aggiornata', 'success');
+        setTimeout(() => setStatus(''), 3000);
+      } catch (e) {
+        setStatus('Errore', 'error');
+        toast(`Errore upload foto: ${e.message}`, 'error');
+      }
+    }
+
+    // ── EDITOR EVENTS ──
+    const editor = document.getElementById('markdownEditor');
+
+    editor.addEventListener('input', () => {
+      dirty = true;
+      updatePreview();
+    });
+
+    // Tab indent
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 2;
+        updatePreview();
+      }
+    });
+
+    // Ctrl+S
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveFile();
+      }
+    });
+
+    // Warn before unload if dirty
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // ── BOOT ──
+    (async function boot() {
+      const saved = loadConfig();
+      if (saved) {
+        config = saved;
+        // Pre-fill fields in case token expired
+        document.getElementById('repoOwner').value = config.owner;
+        document.getElementById('repoName').value = config.repo;
+
+        try {
+          const res = await gh('/contents/README.md?ref=main');
+          if (res.ok) {
+            await initEditor();
+            return;
+          }
+        } catch { }
+
+        // Token invalid — show auth with pre-filled fields
+        toast('Sessione scaduta, inserisci il token', 'error');
+      }
+    })();
+  </script>
+</body>
+
+</html>
